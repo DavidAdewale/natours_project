@@ -8,6 +8,7 @@ const tours = JSON.parse(
   fs.readFileSync(`${__dirname}/dev-data/data/tours-simple.json`)
 );
 
+///GET TOURS 👈
 function getAllTours(req, res) {
   res.status(200).json({
     status: 'success',
@@ -16,6 +17,7 @@ function getAllTours(req, res) {
   });
 }
 
+//GET TOUR 1️⃣
 function getTour(req, res) {
   const { id } = req.params;
   const tour = tours.find((tour) => tour.id === +id);
@@ -28,6 +30,7 @@ function getTour(req, res) {
   });
 }
 
+//CREATE TOUR 🆕
 function createTour(req, res) {
   const newId = tours[tours.length - 1].id + 1;
   const newTour = { ...req.body, id: newId };
@@ -46,6 +49,7 @@ function createTour(req, res) {
   );
 }
 
+//UPDATE TOUR ⬆️
 function updateTour(req, res) {
   const { id } = req.params;
   const tour = tours.find((tour) => tour.id === +id);
@@ -81,6 +85,7 @@ function updateTour(req, res) {
   );
 }
 
+//DELETE TOUR 🗑️
 function deleteTour(req, res) {
   const { id } = req.params;
   const tourIndex = tours.findIndex((tour) => tour.id === +id);
@@ -119,8 +124,12 @@ function deleteTour(req, res) {
 // app.patch('/api/v1/tours/:id', updateTour);
 // app.delete('/api/v1/tours/:id', deleteTour);
 
-app.route('api/v1/tours').get(getAllTours).post(createTour);
-app.route('api/v1/tour/:id').get(getTour).patch(updateTour).delete(deleteTour);
+app.route('/api/v1/tours').get(getAllTours).post(createTour);
+app
+  .route('/api/v1/tours/:id')
+  .get(getTour)
+  .patch(updateTour)
+  .delete(deleteTour);
 
 const port = 3000;
 app.listen(port, () => {
