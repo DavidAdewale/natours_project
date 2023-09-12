@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const slugify = require('slugify');
+// const User = require('./userModel');
 // const validator = require('validator');
 
 const toursSchema = new mongoose.Schema(
@@ -58,12 +59,34 @@ const toursSchema = new mongoose.Schema(
     createdAt: { type: Date, default: Date.now(), select: false },
     startDates: [Date],
     secretTour: { type: Boolean, default: false },
+    startLocation: {
+      type: { type: String, default: 'Point', enum: ['Point'] },
+      coordinates: [Number],
+      address: String,
+      description: String,
+    },
+    locations: [
+      {
+        type: { type: String, default: 'Point', enum: ['Point'] },
+        coordinates: [Number],
+        address: String,
+        description: String,
+        day: Number,
+      },
+    ],
+    guides: [{ type: mongoose.Schema.ObjectId, ref: 'User' }],
   },
   { toJSON: { virtuals: true }, toObject: { virtuals: true } },
 );
 
 toursSchema.virtual('durationWeeks').get(function () {
   return this.duration / 7;
+});
+
+toursSchema.virtual('reviews', {
+  ref: 'Review',
+  foreignField: 'tour',
+  localField: '_id',
 });
 
 //DOCUMENT MIDDLEWARE: runs before .save() and .create() but !== .insertMany() or update()
@@ -73,7 +96,14 @@ toursSchema.pre('save', function (next) {
 });
 
 /*
+toursSchema.pre('save', async function (next) {
+  const guidesPromises = this.guides.map(async (id) => await User.findById(id));
+  this.guides = await Promise.all(guidesPromises);
+  next();
+});
+*/
 
+/*
 toursSchema.pre('save', function (next) {
   console.log('Will save document...');
   next();
@@ -93,14 +123,21 @@ toursSchema.pre(/^find/, function (next) {
   next();
 });
 
-toursSchema.post(/^find/, function (docs, next) {
-  console.log(`Query took ${Date.now() - this.start} ms`);
+toursSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: 'guides',
+    select: '-__v -passwordChangedAt -passwordResetToken',
+  });
   next();
 });
 
 //AGGREGATION MIDDLEWARE
 toursSchema.pre('aggregate', function (next) {
   this.pipeline().unshift({ $match: { secretTour: { $ne: true } } });
+  next();
+});
+toursSchema.post(/^find/, function (docs, next) {
+  console.log(`Query took ${Date.now() - this.start} ms`);
   next();
 });
 

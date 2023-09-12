@@ -12,8 +12,21 @@ const signToken = (id) =>
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
 
+const cookieOptions = {
+  expires: new Date(
+    Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000,
+  ),
+  httpOnly: true,
+};
+
+if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
+
 const createAndSendToken = (user, statusCode, res, sendUserData = true) => {
   const token = signToken(user._id);
+  res.cookie('jwt', token, cookieOptions);
+
+  //remove password from the output
+  user.password = undefined;
 
   if (sendUserData) {
     return res.status(statusCode).json({
@@ -53,10 +66,11 @@ exports.login = catchAsync(async (req, res, next) => {
   }
   //check if user existts && pw is correct
   const user = await User.findOne({ email }).select('+password');
+
   if (!user || !(await user.correctPassword(password, user.password))) {
     return next(new AppError('Incorrect email or password', 401));
   }
-
+  // await resetLoginAttemptsData(user.id);
   createAndSendToken(user, 200, res, false);
 });
 
@@ -153,6 +167,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   if (!user) {
     return next(new AppError('Token is invalid or expired', 400));
   }
+
   user.password = req.body.password;
   user.passwordConfirm = req.body.passwordConfirm;
   user.createPasswordResetToken = undefined;
