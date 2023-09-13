@@ -11,6 +11,11 @@ const filterObj = (obj, ...allowedFields) => {
   return filtered;
 };
 
+exports.getMe = (req, res, next) => {
+  req.params.id = req.user.id;
+  next();
+};
+
 exports.createUser = (req, res) => {
   res.status(500).json({
     status: 'Error',
@@ -51,6 +56,7 @@ exports.deleteMe = catchAsync(async (req, res, next) => {
 });
 
 exports.getAllUsers = factory.getAll(User, 'user');
-exports.getUser = factory.createOne(User, 'user');
+exports.createUser = factory.createOne(User, 'user');
+exports.getUser = factory.getOne(User, 'user');
 exports.updateUser = factory.updateOne(User, 'user');
 exports.deleteUser = factory.deleteOne(User, 'user');
