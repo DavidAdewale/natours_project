@@ -6,6 +6,7 @@ const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
+const cookieParser = require('cookie-parser');
 
 const app = express();
 
@@ -18,6 +19,7 @@ const globalErrorHandler = require('./controllers/errorController');
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
 const reviewRouter = require('./routes/reviewRoutes');
+const viewRouter = require('./routes/viewRoutes');
 
 //Global  Middlewares 👇
 //set security http headers
@@ -43,6 +45,7 @@ app.use('/api', limiter);
 
 //body parser - reading data from the body into req.body [limiting the body size to 10kb]
 app.use(express.json({ limit: '10kb' }));
+app.use(cookieParser());
 
 //data sanitization against NoSQL query injection
 app.use(mongoSanitize());
@@ -67,16 +70,13 @@ app.use(
 //test middleware
 app.use((req, res, next) => {
   req.requestTime = new Date().toISOString();
-  // console.log(req.headers);
+  console.log(req.cookies);
   next();
 });
 
 //Routers
 
-app.get('/', (req, res) => {
-  res.status(200).render('base', { tour: 'The Forest Hiker', user: 'David' });
-});
-
+app.use('/', viewRouter);
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/reviews', reviewRouter);
